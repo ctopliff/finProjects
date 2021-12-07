@@ -25,7 +25,7 @@ for i in range(len(S)):
 
 """
 Set up option payoffs - right now this is only for puts or call options. Will 
-extend to more complex options in the future...
+extend to more complex options in the future..
 """
 optionPrice = np.zeros(N*(N+1)//2)
 if option == 'call':
