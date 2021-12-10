@@ -2,8 +2,9 @@ import numpy as np
 import pdb
 from matplotlib import pyplot as plt
 
-T = 1 #time in the future (in years)
-N = 100 #number of time steps in the tree
+# T = 1 #time in the future (in years)
+T = 40/365
+N = 25 #number of time steps in the tree
 delT = T / N #compute time resolution
 
 r = .05 #risk free rate
@@ -13,7 +14,7 @@ u, d = np.exp(sigma*np.sqrt(delT)), np.exp(-sigma*np.sqrt(delT))
 S0 = 100
 K = 100
 
-option = 'call'
+option = 'put'
 
 # set up initial price
 S = np.zeros((N+1)*(N+2)//2)
@@ -49,5 +50,5 @@ for i in reversed(range(0, N*(N+1)//2)):
     optionPrice[i] = np.exp(-r*delT)*(rp*optionPrice[i + indices[i]] + (1 - rp)*optionPrice[i + indices[i] + 1])
     # optionPrice[i] = repPortfolio[0]*S[i] + \
     #                         repPortfolio[1]*np.exp(r*delT)**(indices[i] - 1)
-pdb.set_trace()
+
 print(f'Price of {option} option: {optionPrice[0]:.4f}')
