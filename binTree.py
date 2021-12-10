@@ -1,8 +1,9 @@
 import numpy as np
 import pdb
+from matplotlib import pyplot as plt
 
-T = .1 #time in the future (in years)
-N = 5 #number of time steps in the tree
+T = 1 #time in the future (in years)
+N = 100 #number of time steps in the tree
 delT = T / N #compute time resolution
 
 r = .05 #risk free rate
@@ -15,9 +16,9 @@ K = 100
 option = 'call'
 
 # set up initial price
-S = np.zeros(N*(N+1)//2)
+S = np.zeros((N+1)*(N+2)//2)
 S[0] = S0
-S[np.cumsum(range(1, N))] = S[0]*u**range(1, N)
+S[np.cumsum(range(1, N+1))] = S[0]*u**range(1, N+1)
 for i in range(len(S)):
     if(S[i] == 0):
         S[i] = S[i-1]*d**2
@@ -27,24 +28,26 @@ for i in range(len(S)):
 Set up option payoffs - right now this is only for puts or call options. Will 
 extend to more complex options in the future..
 """
-optionPrice = np.zeros(N*(N+1)//2)
+optionPrice = np.zeros((N+1)*(N+2)//2)
 if option == 'call':
-    optionPrice[-N:] = np.maximum(S[-N:] - K, 0)
+    optionPrice[-N-1:] = np.maximum(S[-N-1:] - K, 0)
 elif option == 'put':
-    optionPrice[-N:] = np.maximum(K - S[-N:], 0)
+    optionPrice[-N-1:] = np.maximum(K - S[-N-1:], 0)
 
-indices = []
-[indices.extend([i]*i) for i in range(N)]
-for i in reversed(range(0, N*(N-1)//2)):
-    priceUp, priceDn = optionPrice[i + indices[i]], optionPrice[i + indices[i]]
+indices = [] # these indices keep track of how far to look ahead in S for the loop
+[indices.extend([i]*i) for i in range(N + 1)]
+
+for i in reversed(range(0, N*(N+1)//2)):
+    priceUp, priceDn = optionPrice[i + indices[i]], optionPrice[i + indices[i] + 1]
     stockUp, stockDn = S[i + indices[i]], S[i + indices[i] + 1]
-    rateUp = np.exp(1 + r)**indices[i]
 
+    rateUp = np.exp(r*delT)**indices[i]
     repPortfolio = np.matmul(np.linalg.inv([[stockUp, rateUp], 
                             [stockDn, rateUp]]), 
                             np.array([priceUp, priceDn]).T)
-
-    optionPrice[i] = repPortfolio[0]*S[i] + \
-                            repPortfolio[1]*np.exp(1 + r)**(indices[i] - 1)
-    
+    rp = (np.exp(r*delT) - d)/(u - d)
+    optionPrice[i] = np.exp(-r*delT)*(rp*optionPrice[i + indices[i]] + (1 - rp)*optionPrice[i + indices[i] + 1])
+    # optionPrice[i] = repPortfolio[0]*S[i] + \
+    #                         repPortfolio[1]*np.exp(r*delT)**(indices[i] - 1)
+pdb.set_trace()
 print(f'Price of {option} option: {optionPrice[0]:.4f}')
