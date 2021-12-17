@@ -2,19 +2,20 @@ import numpy as np
 import pdb
 from matplotlib import pyplot as plt
 
-# T = 1 #time in the future (in years)
-T = 40/365
-N = 25 #number of time steps in the tree
+T = 1 #time in the future (in years)
+N = 1000 #number of time steps in the tree
 delT = T / N #compute time resolution
-
+div = .01
 r = .05 #risk free rate
 sigma = .2 #volatility of asset
+
+exStyle = 'a'
 
 u, d = np.exp(sigma*np.sqrt(delT)), np.exp(-sigma*np.sqrt(delT))
 S0 = 100
 K = 100
 
-option = 'put'
+option = 'call'
 
 # set up initial price
 S = np.zeros((N+1)*(N+2)//2)
@@ -24,11 +25,11 @@ for i in range(len(S)):
     if(S[i] == 0):
         S[i] = S[i-1]*d**2
 
-
 """
 Set up option payoffs - right now this is only for puts or call options. Will 
 extend to more complex options in the future..
 """
+
 optionPrice = np.zeros((N+1)*(N+2)//2)
 if option == 'call':
     optionPrice[-N-1:] = np.maximum(S[-N-1:] - K, 0)
@@ -46,8 +47,15 @@ for i in reversed(range(0, N*(N+1)//2)):
     repPortfolio = np.matmul(np.linalg.inv([[stockUp, rateUp], 
                             [stockDn, rateUp]]), 
                             np.array([priceUp, priceDn]).T)
-    rp = (np.exp(r*delT) - d)/(u - d)
+    rp = (np.exp((r - div)*delT) - d)/(u - d)
     optionPrice[i] = np.exp(-r*delT)*(rp*optionPrice[i + indices[i]] + (1 - rp)*optionPrice[i + indices[i] + 1])
+
+    if exStyle == 'a':
+        if option == 'call':
+            optionPrice[i] = max(optionPrice[i], S[i] - K)
+        elif option == 'put':
+            optionPrice[i] = max(optionPrice[i], K - S[i])
+
     # optionPrice[i] = repPortfolio[0]*S[i] + \
     #                         repPortfolio[1]*np.exp(r*delT)**(indices[i] - 1)
 
