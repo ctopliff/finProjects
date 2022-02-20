@@ -1,21 +1,19 @@
 import numpy as np
-import pdb
-from matplotlib import pyplot as plt
 
-T = 1 #time in the future (in years)
-N = 1000 #number of time steps in the tree
+T = .43819 #time in the future (in years)
+N = 25 #number of time steps in the tree
 delT = T / N #compute time resolution
-div = .01
+div = 0 #dividend rate
 r = .05 #risk free rate
 sigma = .2 #volatility of asset
 
-exStyle = 'a'
+exStyle = 'a' #exercise style of option
 
 u, d = np.exp(sigma*np.sqrt(delT)), np.exp(-sigma*np.sqrt(delT))
 S0 = 100
 K = 100
 
-option = 'call'
+option = 'put'
 
 # set up initial price
 S = np.zeros((N+1)*(N+2)//2)
@@ -29,7 +27,6 @@ for i in range(len(S)):
 Set up option payoffs - right now this is only for puts or call options. Will 
 extend to more complex options in the future..
 """
-
 optionPrice = np.zeros((N+1)*(N+2)//2)
 if option == 'call':
     optionPrice[-N-1:] = np.maximum(S[-N-1:] - K, 0)
@@ -39,6 +36,9 @@ elif option == 'put':
 indices = [] # these indices keep track of how far to look ahead in S for the loop
 [indices.extend([i]*i) for i in range(N + 1)]
 
+"""
+Calculate option value through replicating portfolio method - this is the deterministic equation given in Hull
+"""
 for i in reversed(range(0, N*(N+1)//2)):
     priceUp, priceDn = optionPrice[i + indices[i]], optionPrice[i + indices[i] + 1]
     stockUp, stockDn = S[i + indices[i]], S[i + indices[i] + 1]
@@ -56,7 +56,7 @@ for i in reversed(range(0, N*(N+1)//2)):
         elif option == 'put':
             optionPrice[i] = max(optionPrice[i], K - S[i])
 
-    # optionPrice[i] = repPortfolio[0]*S[i] + \
-    #                         repPortfolio[1]*np.exp(r*delT)**(indices[i] - 1)
-
+"""
+Print Price of Option
+"""
 print(f'Price of {option} option: {optionPrice[0]:.4f}')
